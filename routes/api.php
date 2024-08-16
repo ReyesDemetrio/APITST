@@ -16,6 +16,8 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::post('horario/listar', [HorarioController::class, 'listar']);
+Route::get('horario/listarCursos', [HorarioController::class, 'listarCursos']);
+
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();

@@ -58,4 +58,14 @@ class HorarioController extends Controller
 
         return response()->json($results);
     }
+
+
+    public function listarCursos()
+    {
+        $results = DB::table('asignatura')
+            ->select('id', 'Nombre')
+            ->get();
+
+        return response()->json($results);
+    }
 }
