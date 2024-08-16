@@ -48,16 +48,56 @@ class HorarioController extends Controller
         //
     }
 
-    public function listar()
+    public function listar(Request $request)
     {
-        $results = DB::table('horario as H')
+        $nombre = $request->input('nombre');
+        $horaInicio = $request->input('horaInicio');
+        $horaFin = $request->input('horaFin');
+        $ambiente = $request->input('ambiente');
+        $curso = $request->input('curso');
+        $dia = $request->input('dia');
+
+        // Tratar los valores '0' como null
+        $ambiente = ($ambiente == 0) ? null : $ambiente;
+        $curso = ($curso == 0) ? null : $curso;
+        $dia = ($dia == 0) ? null : $dia;
+
+        $query = DB::table('horario as H')
             ->join('docente as D', 'D.id', '=', 'H.Docente')
             ->join('asignatura as A', 'A.id', '=', 'H.Curso')
-            ->select('D.Nombre as NombreDocente', 'D.Apellidos as ApellidoDocente', 'H.Numero', 'H.Ambiente', 'H.Dia', 'H.HoraInicio', 'H.HoraFin', 'A.Nombre as NombreCurso')
-            ->get();
+            ->select('D.Nombre as NombreDocente', 'D.Apellidos as ApellidoDocente', 'H.Numero', 'H.Ambiente', 'H.Dia', 'H.HoraInicio', 'H.HoraFin', 'A.Nombre as NombreCurso');
+
+        if (!is_null($dia)) {
+            $query->where('H.Dia', '=', $dia);
+        }
+
+        if (!is_null($nombre)) {
+            $query->where('D.Nombre', 'like', '%' . $nombre . '%');
+        }
+
+        if (!is_null($ambiente)) {
+            $query->where('H.Ambiente', '=', $ambiente);
+        }
+
+        if (!is_null($curso)) {
+            $query->where('H.Curso', '=', $curso);
+        }
+
+        if (!is_null($horaInicio) && is_null($horaFin)) {
+            // Si solo se envía horaInicio, comparar desde horaInicio hasta cualquier hora
+            $query->where(DB::raw('TIME("' . $horaInicio . '")'), '<=', DB::raw('TIME(H.HoraInicio)'));
+        } elseif (!is_null($horaInicio) && !is_null($horaFin)) {
+            // Si se envían ambas horas, comparar entre horaInicio y horaFin
+            $query->where(DB::raw('TIME("' . $horaInicio . '")'), '<=', DB::raw('TIME(H.HoraInicio)'))
+                ->where(DB::raw('TIME("' . $horaFin . '")'), '>=', DB::raw('TIME(H.HoraFin)'));
+        }
+
+        $results = $query->get();
 
         return response()->json($results);
     }
+
+
 
 
     public function listarCursos()
